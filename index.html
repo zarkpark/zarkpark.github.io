@@ -62,53 +62,145 @@
     <div class="payment-container">
         <h1>결제 페이지</h1>
         
-        <div class="theme-controls">
-            <h3>테마 색상 설정</h3>
-            <div class="color-control">
-                <label>기본 색상:</label>
-                <input type="color" id="primary-color" value="#000000">
-                <span>#000000</span>
+        <div id="session-input-container">
+            <div style="margin-bottom: 20px;">
+                <label for="session-input">세션 ID:</label>
+                <input type="text" id="session-input" placeholder="세션 ID를 입력하세요">
+                <button id="start-payment">결제 시작</button>
             </div>
-            <div class="color-control">
-                <label>에러 색상:</label>
-                <input type="color" id="error-color" value="#df1b41">
-                <span>#df1b41</span>
-            </div>
-            <div class="color-control">
-                <label>보조 색상:</label>
-                <input type="color" id="secondary-color" value="#6d6e78">
-                <span>#6d6e78</span>
-            </div>
-            <div class="color-control">
-                <label>플레이스홀더 색상:</label>
-                <input type="color" id="placeholder-color" value="#6d6e78">
-                <span>#6d6e78</span>
-            </div>
-            <div class="color-control">
-                <label>테두리 색상:</label>
-                <input type="color" id="border-color" value="#e6e6e6">
-                <span>#e6e6e6</span>
-            </div>
-            <div class="color-control">
-                <label>선택 색상:</label>
-                <input type="color" id="selected-color" value="#0570de">
-                <span>#0570de</span>
-            </div>
-            <div class="color-control">
-                <label>필드 배경색:</label>
-                <input type="color" id="field-background" value="#ffffff">
-                <span>#ffffff</span>
+
+            <div style="background: #f5f5f5; padding: 15px; border-radius: 5px;">
+                <p style="margin-bottom: 10px;">아래 명령어를 터미널에 실행한 후, id 값을 입력하세요</p>
+                <pre style="background: #2d2d2d; color: #ffffff; padding: 15px; border-radius: 5px; overflow-x: auto;"><code>curl -X POST https://komoju.com/api/v1/sessions \
+  --user '비밀키(자크한테 문의해주세요):' \
+  --data mode=customer \
+  --data amount=1000 \
+  --data currency=JPY \
+  --data return_url=https://example.com</code></pre>
             </div>
         </div>
 
-        <komoju-fields
-            id="komoju-fields"
-            session-id="89zbgfx9vnsbftqvs70mnlc2p"
-            publishable-key="pk_test_c2w0tmxuswzsl030rzvhs0iu"
-        ></komoju-fields>
+        <div id="payment-section" style="display: none;">
+            <div class="theme-controls">
+                <h3>테마 색상 설정</h3>
+                <div class="color-control">
+                    <label>기본 색상:</label>
+                    <input type="color" id="primary-color" value="#000000">
+                    <span>#000000</span>
+                </div>
+                <div class="color-control">
+                    <label>에러 색상:</label>
+                    <input type="color" id="error-color" value="#df1b41">
+                    <span>#df1b41</span>
+                </div>
+                <div class="color-control">
+                    <label>보조 색상:</label>
+                    <input type="color" id="secondary-color" value="#6d6e78">
+                    <span>#6d6e78</span>
+                </div>
+                <div class="color-control">
+                    <label>플레이스홀더 색상:</label>
+                    <input type="color" id="placeholder-color" value="#6d6e78">
+                    <span>#6d6e78</span>
+                </div>
+                <div class="color-control">
+                    <label>테두리 색상:</label>
+                    <input type="color" id="border-color" value="#e6e6e6">
+                    <span>#e6e6e6</span>
+                </div>
+                <div class="color-control">
+                    <label>선택 색상:</label>
+                    <input type="color" id="selected-color" value="#0570de">
+                    <span>#0570de</span>
+                </div>
+                <div class="color-control">
+                    <label>필드 배경색:</label>
+                    <input type="color" id="field-background" value="#ffffff">
+                    <span>#ffffff</span>
+                </div>
+            </div>
+
+            <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                <p style="margin-bottom: 10px;">테스트 결제를 위해 다음 정보를 입력하세요:</p>
+                <ul style="list-style: none; padding-left: 0;">
+                    <li>👤 이름: 아무 이름이나 넣으세요 (예: hj)</li>
+                    <li>💳 카드번호: 4100000000000100</li>
+                    <li>📅 유효기간: 08/25</li>
+                    <li>🔒 CVC: 123</li>
+                </ul>
+            </div>
+
+            <form id="payment-form">
+                <div id="fields-container"></div>
+                <button type="submit" id="submit-button" style="margin-top: 20px;">결제하기</button>
+            </form>
+        </div>
     </div>
 
     <script>
+        const sessionInput = document.getElementById('session-input');
+        const startPaymentBtn = document.getElementById('start-payment');
+        const paymentSection = document.getElementById('payment-section');
+        const fieldsContainer = document.getElementById('fields-container');
+        
+        startPaymentBtn.addEventListener('click', () => {
+            const sessionId = sessionInput.value.trim();
+            
+            if (!sessionId) {
+                alert('세션 ID를 입력해주세요.');
+                return;
+            }
+
+            const komojuFields = document.createElement('komoju-fields');
+            komojuFields.setAttribute('id', 'komoju-fields');
+            komojuFields.setAttribute('session-id', sessionId);
+            komojuFields.setAttribute('publishable-key', 'pk_test_c2w0tmxuswzsl030rzvhs0iu');
+            
+            fieldsContainer.innerHTML = '';
+            fieldsContainer.appendChild(komojuFields);
+
+            paymentSection.style.display = 'block';
+            document.getElementById('session-input-container').style.display = 'none';
+
+            const form = document.getElementById('payment-form');
+            const submitButton = document.getElementById('submit-button');
+
+            komojuFields.addEventListener('validityChange', (event) => {
+                submitButton.disabled = !event.detail.valid;
+            });
+
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+
+                try {
+                    const response = await fetch('/your-api-endpoint', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            sessionId: sessionId,
+                            // 필요한 데이터들...
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('API 호출 실패');
+                    }
+
+                    const result = await komojuFields.submit();
+                    
+                    form.submit();
+                    
+                } catch (error) {
+                    console.error('처리 중 오류:', error);
+                    // 에러 처리 로직 추가
+                }
+            });
+
+            updateTheme();
+        });
+
         function updateTheme() {
             const colors = {
                 'primary-color': '',
@@ -121,17 +213,14 @@
                 'hover-background': '#cccccc1f'
             };
 
-            // 각 컬러 피커의 값을 가져옴
             Object.keys(colors).forEach(key => {
                 if (key !== 'hover-background') {
                     const input = document.getElementById(key);
                     colors[key] = input.value;
-                    // 색상 코드 표시 업데이트
                     input.nextElementSibling.textContent = input.value;
                 }
             });
 
-            // CSS 테마 문자열 생성
             const themeCSS = `:root,:host{
                 --primary-color:${colors['primary-color']};
                 --error-color:${colors['error-color']};
@@ -143,18 +232,13 @@
                 --hover-background:${colors['hover-background']};
             }`;
 
-            // KOMOJU Fields 엘리먼트의 theme 속성 업데이트
             const komojuFields = document.getElementById('komoju-fields');
             komojuFields.setAttribute('theme', `data:text/css,${encodeURIComponent(themeCSS)}`);
         }
 
-        // 모든 컬러 피커에 이벤트 리스너 추가
         document.querySelectorAll('input[type="color"]').forEach(input => {
             input.addEventListener('change', updateTheme);
         });
-
-        // 초기 테마 설정
-        updateTheme();
     </script>
 </body>
 </html> 
