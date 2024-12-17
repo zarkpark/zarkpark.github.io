@@ -182,9 +182,9 @@
             try {
                 // KOMOJU Fields에서 토큰 생성
                 const result = await komojuFields.submit();
-                
+                alert(`komoju submit result is ${result}`);
                 // 백엔드로 토큰 전송
-                await sendTokenToBackend(result.token);
+                // await sendTokenToBackend(result.token);
                 
             } catch (error) {
                 console.error('결제 처리 중 오류:', error);
