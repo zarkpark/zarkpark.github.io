@@ -72,21 +72,11 @@
             <div style="background: #f5f5f5; padding: 15px; border-radius: 5px;">
                 <p style="margin-bottom: 10px;">아래 명령어를 터미널에 실행한 후, id 값을 입력하세요</p>
                 <pre style="background: #2d2d2d; color: #ffffff; padding: 15px; border-radius: 5px; overflow-x: auto;"><code>curl -X POST https://komoju.com/api/v1/sessions \
-  --user '비밀키값이라 자크한테 문의해주세요' \
-  --header 'Content-Type: application/json' \
-  --header 'Accept: application/json' \
-  --data '{
-    "payment_data": {
-      "capture": "auto",
-      "currency": "JPY",
-      "intent": "one_time"
-    },
-    "return_url": "http://localhost:3000/thankyou.html",
-    "amount": "10000",
-    "currency": "JPY",
-    "email": "hyunjoon.park@bucketplace.net",
-    "payment_types": ["credit_card"]
-  }'</code></pre>
+  --user '비밀키(자크한테 문의해주세요):' \
+  --data mode=customer \
+  --data amount=1000 \
+  --data currency=JPY \
+  --data return_url=https://example.com</code></pre>
             </div>
         </div>
 
@@ -131,20 +121,19 @@
             </div>
 
             <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
-                <p style="margin-bottom: 10px; color: #d63031; font-weight: bold;">⚠️ 실결제 테스트 화면입니다.</p>
-                <p style="margin-bottom: 10px;">실제 카드 정보를 기입해서 3DS 인증이 일어나는지 테스트하고자 합니다.</p>
-                <p>여기서부터의 화면을 영상으로 찍어서 공유해주시길 바랍니다.</p>
+                <p style="margin-bottom: 10px;">테스트 결제를 위해 다음 정보를 입력하세요:</p>
+                <ul style="list-style: none; padding-left: 0;">
+                    <li>👤 이름: 아무 이름이나 넣으세요 (예: hj)</li>
+                    <li>💳 카드번호: 4100000000000100</li>
+                    <li>📅 유효기간: 08/25</li>
+                    <li>🔒 CVC: 123</li>
+                </ul>
             </div>
 
-            <div id="payment-form">
-                <komoju-fields
-                    id="komoju-fields"
-                    session-id=""
-                    publishable-key="pk_live_1hvfeao4e77dqp1bhpammul5"
-                ></komoju-fields>
-                
-                <button type="button" id="submit-button" onclick="submitPayment()" style="margin-top: 20px;">결제하기</button>
-            </div>
+            <form id="payment-form">
+                <div id="fields-container"></div>
+                <button type="submit" id="submit-button" style="margin-top: 20px;">결제하기</button>
+            </form>
         </div>
     </div>
 
@@ -152,7 +141,7 @@
         const sessionInput = document.getElementById('session-input');
         const startPaymentBtn = document.getElementById('start-payment');
         const paymentSection = document.getElementById('payment-section');
-        const komojuFields = document.getElementById('komoju-fields');
+        const fieldsContainer = document.getElementById('fields-container');
         
         startPaymentBtn.addEventListener('click', () => {
             const sessionId = sessionInput.value.trim();
@@ -162,53 +151,55 @@
                 return;
             }
 
-            // 세션 ID 설정
+            const komojuFields = document.createElement('komoju-fields');
+            komojuFields.setAttribute('id', 'komoju-fields');
             komojuFields.setAttribute('session-id', sessionId);
+            komojuFields.setAttribute('publishable-key', 'pk_test_c2w0tmxuswzsl030rzvhs0iu');
             
-            // 결제 섹션 표시
+            fieldsContainer.innerHTML = '';
+            fieldsContainer.appendChild(komojuFields);
+
             paymentSection.style.display = 'block';
             document.getElementById('session-input-container').style.display = 'none';
 
-            // 초기 테마 설정
+            const form = document.getElementById('payment-form');
+            const submitButton = document.getElementById('submit-button');
+
+            komojuFields.addEventListener('validityChange', (event) => {
+                submitButton.disabled = !event.detail.valid;
+            });
+
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+
+                try {
+                    const response = await fetch('/your-api-endpoint', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            sessionId: sessionId,
+                            // 필요한 데이터들...
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('API 호출 실패');
+                    }
+
+                    const result = await komojuFields.submit();
+                    
+                    form.submit();
+                    
+                } catch (error) {
+                    console.error('처리 중 오류:', error);
+                    // 에러 처리 로직 추가
+                }
+            });
+
             updateTheme();
         });
-
-        // validityChange 이벤트 리스너
-        komojuFields.addEventListener('validityChange', (event) => {
-            document.getElementById('submit-button').disabled = !event.detail.valid;
-        });
-
-        async function submitPayment() {
-            try {
-                // KOMOJU Fields에서 토큰 생성
-                const result = await komojuFields.submit();
-                
-                // 백엔드로 토큰 전송
-                await sendTokenToBackend(result.token);
-                
-            } catch (error) {
-                console.error('결제 처리 중 오류:', error);
-                alert('결제 처리 중 오류가 발생했습니다.');
-            }
-        }
-
-        async function sendTokenToBackend(token) {
-            // const response = await fetch('/your-backend-endpoint', {
-            //     method: 'POST',
-            //     headers: {
-            //         'Content-Type': 'application/json',
-            //     },
-            //     body: JSON.stringify({ token })
-            // });
-
-            // if (!response.ok) {
-            //     throw new Error('결제 처리 실패');
-            // }
-            console.log(token);
-
-            // 성공 시 처리 (예: 성공 페이지로 리다이렉트)
-            window.location.href = '/success';
-        }
 
         function updateTheme() {
             const colors = {
@@ -241,6 +232,7 @@
                 --hover-background:${colors['hover-background']};
             }`;
 
+            const komojuFields = document.getElementById('komoju-fields');
             komojuFields.setAttribute('theme', `data:text/css,${encodeURIComponent(themeCSS)}`);
         }
 
