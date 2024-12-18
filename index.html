@@ -183,7 +183,7 @@
             try {
                 // KOMOJU Fields에서 토큰 생성
                 const result = await komojuFields.submit();
-                alert(`komoju submit result is ${result}`);
+                alert(`komoju submit result is ${JSON.stringify(result, null, 2)}`);
                 // 백엔드로 토큰 전송
                 // await sendTokenToBackend(result.token);
                 
