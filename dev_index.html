@@ -177,9 +177,9 @@
             try {
                 // KOMOJU Fields에서 토큰 생성
                 const result = await komojuFields.submit();
-                
+                console.log("result is ", result);
                 // 백엔드로 토큰 전송
-                await sendTokenToBackend(result.token);
+                // await sendTokenToBackend(result.token);
                 
             } catch (error) {
                 console.error('결제 처리 중 오류:', error);
@@ -202,7 +202,7 @@
             console.log(token);
 
             // 성공 시 처리 (예: 성공 페이지로 리다이렉트)
-            window.location.href = '/success';
+            // window.location.href = '/success';
         }
 
         function updateTheme() {
